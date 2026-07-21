@@ -972,25 +972,22 @@ function Field({S,label,children}){
 export default function App(){
   const [darkMode,setDarkMode]=useState(true);
   const S=useMemo(()=>makeS(darkMode),[darkMode]);
-  const [customers,setCustomers]=useState(()=>{
-    try {
-      const saved = localStorage.getItem("mp_customers");
-      return saved ? JSON.parse(saved) : initialCustomers;
-    } catch(e) { return initialCustomers; }
-  });
+  const [customers,setCustomers]=useState([]);
+  const [loading,setLoading]=useState(true);
 
   // Load from Supabase on mount + poll every 15 seconds
   useEffect(()=>{
-    const load = () => {
+    const load = (isFirst) => {
       sbGet().then(data=>{
-        if (data && data.length > 0) {
+        if (data !== null) {
           setCustomers(data);
           try { localStorage.setItem("mp_customers", JSON.stringify(data)); } catch(e){}
         }
-      });
+        if (isFirst) setLoading(false);
+      }).catch(()=>{ if(isFirst) setLoading(false); });
     };
-    load();
-    const interval = setInterval(load, 15000);
+    load(true);
+    const interval = setInterval(()=>load(false), 15000);
     return () => clearInterval(interval);
   },[]);
 
