@@ -738,17 +738,15 @@ function BookingTab({S,bookings,setBookings,sbUpsertBooking,sbDeleteBooking,book
     if(bookingForm.id){
       const updated={...bookingForm};
       setBookings(bookings.map(b=>b.id===bookingForm.id?updated:b));
-      skipNextBPoll.current=true;
       sbUpsertBooking(updated);
     } else {
       const nb={...bookingForm,id:String(Date.now())};
       setBookings([...bookings,nb]);
-      skipNextBPoll.current=true;
       sbUpsertBooking(nb);
     }
     setShowBookingForm(false);
   };
-  const delBooking=id=>{setBookings(bookings.filter(b=>b.id!==id));skipNextBPoll.current=true;sbDeleteBooking(String(id));setDeleteBookingConfirm(null);};
+  const delBooking=id=>{setBookings(bookings.filter(b=>b.id!==id));sbDeleteBooking(String(id));setDeleteBookingConfirm(null);};
   const togBSvc=s=>setBookingForm(f=>({...f,services:f.services.includes(s)?f.services.filter(x=>x!==s):[...f.services,s]}));
 
   const BS={
@@ -1030,16 +1028,12 @@ export default function App(){
     return () => clearInterval(interval);
   },[]);
 
-  // Load bookings from Supabase + poll every 15 seconds
+  // Load bookings when user switches to booking tab
   useEffect(()=>{
-    const loadB=()=>{
-      if(skipNextBPoll.current){ skipNextBPoll.current=false; return; }
+    if(tab==="booking"){
       sbGetBookings().then(data=>{ if(data!==null) setBookings(data); });
-    };
-    loadB();
-    const interval=setInterval(loadB,15000);
-    return ()=>clearInterval(interval);
-  },[]);
+    }
+  },[tab]);
 
   // Save to localStorage backup
   useEffect(()=>{
@@ -1064,7 +1058,6 @@ export default function App(){
   const [deleteConfirm,setDeleteConfirm]=useState(null);
   const [statsRange,setStatsRange]=useState("week");
   const [bookings,setBookings]=useState([]);
-  const skipNextBPoll=React.useRef(false);
   const [bookingView,setBookingView]=useState("list");
   const [bookingSelectedDate,setBookingSelectedDate]=useState(new Date().toISOString().slice(0,10));
   const [bookingCalDate,setBookingCalDate]=useState(new Date());
