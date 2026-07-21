@@ -1,4 +1,35 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+
+// Firebase setup via compat SDK
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyChVuGSdNrPyA3jx2Jfia5vsnVRGnrvuto",
+  authDomain: "mp-autocare.firebaseapp.com",
+  projectId: "mp-autocare",
+  storageBucket: "mp-autocare.firebasestorage.app",
+  messagingSenderId: "74541839921",
+  appId: "1:74541839921:web:ad8bdeb87113b820ad0710"
+};
+
+function loadFirebase() {
+  return new Promise((resolve) => {
+    if (window._db) { resolve(window._db); return; }
+    const s1 = document.createElement('script');
+    s1.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
+    s1.onload = () => {
+      const s2 = document.createElement('script');
+      s2.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js';
+      s2.onload = () => {
+        if (!window.firebase.apps.length) {
+          window.firebase.initializeApp(FIREBASE_CONFIG);
+        }
+        window._db = window.firebase.firestore();
+        resolve(window._db);
+      };
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(s1);
+  });
+}
 
 function makeS(dark) {
   const bg=dark?"#0f1117":"#f0f4f8",card=dark?"rgba(255,255,255,0.04)":"#fff";
@@ -934,12 +965,46 @@ export default function App(){
       return saved ? JSON.parse(saved) : initialCustomers;
     } catch(e) { return initialCustomers; }
   });
+  const dbRef = useRef(null);
+  const [cloudReady, setCloudReady] = useState(false);
 
-  // Save to localStorage whenever customers change
+  // Load Firebase and sync
+  useEffect(()=>{
+    loadFirebase().then(db=>{
+      dbRef.current = db;
+      // Listen for real-time updates
+      db.collection("customers").onSnapshot(snap=>{
+        if (!snap.empty) {
+          const data = snap.docs.map(d=>({...d.data(), id:d.id}));
+          setCustomers(data);
+          try { localStorage.setItem("mp_customers", JSON.stringify(data)); } catch(e){}
+        }
+        setCloudReady(true);
+      }, err=>{
+        console.warn("Firestore offline, using localStorage:", err);
+        setCloudReady(false);
+      });
+    }).catch(err=>{
+      console.warn("Firebase load failed:", err);
+    });
+  },[]);
+
+  // Save to localStorage as backup whenever customers change
   useEffect(()=>{
     try { localStorage.setItem("mp_customers", JSON.stringify(customers)); }
-    catch(e) { console.error("Save error:", e); }
+    catch(e) {}
   },[customers]);
+
+  function saveToCloud(updatedList) {
+    if (!dbRef.current) return;
+    updatedList.forEach(c=>{
+      dbRef.current.collection("customers").doc(String(c.id)).set(c).catch(e=>console.error(e));
+    });
+  }
+  function deleteFromCloud(id) {
+    if (!dbRef.current) return;
+    dbRef.current.collection("customers").doc(String(id)).delete().catch(e=>console.error(e));
+  }
   const [view,setView]=useState("list");
   const [tab,setTab]=useState("home");
   const [homeView,setHomeView]=useState("main");
@@ -994,6 +1059,7 @@ export default function App(){
   };
   const deleteCustomer=id=>{
     setCustomers(customers.filter(c=>c.id!==id));
+    deleteFromCloud(id);
     setDeleteConfirm(null);goList();showToast("客戶已刪除","error");
   };
   const openAddVisit=()=>{setVisitForm(makeEmptyVisitForm());setView("addVisit");};
@@ -1005,9 +1071,11 @@ export default function App(){
     if(view==="addVisit"){
       const nv={...visitForm,id:String(Date.now()),amount:Number(visitForm.amount)||0};
       updated=customers.map(c=>c.id===selected.id?{...c,updatedAt:now,visits:[nv,...c.visits].sort((a,b)=>b.date.localeCompare(a.date))}:c);
+      saveToCloud([updated.find(c=>c.id===selected.id)]);
       showToast("消費紀錄已新增 ✓");
     } else {
       updated=customers.map(c=>c.id===selected.id?{...c,updatedAt:now,visits:c.visits.map(v=>v.id===editingVisit.id?{...v,...visitForm,amount:Number(visitForm.amount)||0}:v)}:c);
+      saveToCloud([updated.find(c=>c.id===selected.id)]);
       showToast("紀錄已更新 ✓");
     }
     setCustomers(updated);setSelected(updated.find(c=>c.id===selected.id));setView("detail");
