@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from "react";
 
 // Supabase config
 const SB_URL = "https://plgspjfvalfgfnoizhpm.supabase.co";
-const SB_KEY = "sb_publishable_meAYm8sD2awBWNpj7g2XNQ_G9xev3WW";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsZ3NwamZ2YWxmZ2Zub2l6aHBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NTc0MjgsImV4cCI6MjEwMDIzMzQyOH0.nNJ2plajekKvgPcH7-R2maOrvp4urxcN5zRUqUUv8J0";
 const SB_HEADERS = { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY };
 
 async function sbGet() {
