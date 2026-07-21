@@ -1021,16 +1021,11 @@ export default function App(){
     return () => clearInterval(interval);
   },[]);
 
-  // Load bookings from Supabase + poll every 15 seconds
+  // Load bookings from Supabase on mount only
   useEffect(()=>{
-    const loadB = () => {
-      sbGetBookings().then(data=>{
-        if (data !== null) setBookings(data);
-      });
-    };
-    loadB();
-    const interval = setInterval(loadB, 15000);
-    return () => clearInterval(interval);
+    sbGetBookings().then(data=>{
+      if (data !== null) setBookings(data);
+    });
   },[]);
 
   // Save to localStorage backup
