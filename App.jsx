@@ -1,0 +1,21 @@
+{
+  "short_name": "沐品 AutoCare",
+  "name": "沐品車體美學 AutoCare",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0f1117",
+  "background_color": "#0f1117",
+  "orientation": "portrait"
+}
