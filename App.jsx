@@ -1,19 +1,4 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, onSnapshot } from "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyChVuGSdNrPyA3jx2Jfia5vsnVRGnrvuto",
-  authDomain: "mp-autocare.firebaseapp.com",
-  projectId: "mp-autocare",
-  storageBucket: "mp-autocare.firebasestorage.app",
-  messagingSenderId: "74541839921",
-  appId: "1:74541839921:web:ad8bdeb87113b820ad0710"
-};
-
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
-
 
 function makeS(dark) {
   const bg=dark?"#0f1117":"#f0f4f8",card=dark?"rgba(255,255,255,0.04)":"#fff";
@@ -943,22 +928,18 @@ function Field({S,label,children}){
 export default function App(){
   const [darkMode,setDarkMode]=useState(true);
   const S=useMemo(()=>makeS(darkMode),[darkMode]);
-  const [customers,setCustomers]=useState([]);
-  const [dbReady,setDbReady]=useState(false);
+  const [customers,setCustomers]=useState(()=>{
+    try {
+      const saved = localStorage.getItem("mp_customers");
+      return saved ? JSON.parse(saved) : initialCustomers;
+    } catch(e) { return initialCustomers; }
+  });
 
-  // Load customers from Firestore on mount
+  // Save to localStorage whenever customers change
   useEffect(()=>{
-    const unsub = onSnapshot(collection(db,"customers"), (snapshot)=>{
-      const data = snapshot.docs.map(d=>({...d.data(), id:d.id}));
-      setCustomers(data.length > 0 ? data : initialCustomers);
-      setDbReady(true);
-    }, (err)=>{
-      console.error("Firestore error:", err);
-      setCustomers(initialCustomers);
-      setDbReady(true);
-    });
-    return ()=>unsub();
-  },[]);
+    try { localStorage.setItem("mp_customers", JSON.stringify(customers)); }
+    catch(e) { console.error("Save error:", e); }
+  },[customers]);
   const [view,setView]=useState("list");
   const [tab,setTab]=useState("home");
   const [homeView,setHomeView]=useState("main");
@@ -1008,13 +989,11 @@ export default function App(){
       const updated=customers.map(c=>c.id===selected.id?{...c,...customerForm,vehicles:customerForm.vehicles||c.vehicles||[],updatedAt:now}:c);
       setCustomers(updated);
       const updatedC=updated.find(c=>c.id===selected.id);
-      setDoc(doc(db,"customers",String(updatedC.id)), updatedC).catch(e=>console.error(e));
       setSelected(updatedC);showToast("資料已更新 ✓");setView("detail");
     }
   };
   const deleteCustomer=id=>{
     setCustomers(customers.filter(c=>c.id!==id));
-    deleteDoc(doc(db,"customers",String(id))).catch(e=>console.error(e));
     setDeleteConfirm(null);goList();showToast("客戶已刪除","error");
   };
   const openAddVisit=()=>{setVisitForm(makeEmptyVisitForm());setView("addVisit");};
@@ -1026,13 +1005,9 @@ export default function App(){
     if(view==="addVisit"){
       const nv={...visitForm,id:String(Date.now()),amount:Number(visitForm.amount)||0};
       updated=customers.map(c=>c.id===selected.id?{...c,updatedAt:now,visits:[nv,...c.visits].sort((a,b)=>b.date.localeCompare(a.date))}:c);
-      const savedC1=updated.find(c=>c.id===selected.id);
-      setDoc(doc(db,"customers",String(selected.id)), savedC1).catch(e=>console.error(e));
       showToast("消費紀錄已新增 ✓");
     } else {
       updated=customers.map(c=>c.id===selected.id?{...c,updatedAt:now,visits:c.visits.map(v=>v.id===editingVisit.id?{...v,...visitForm,amount:Number(visitForm.amount)||0}:v)}:c);
-      const savedC2=updated.find(c=>c.id===selected.id);
-      setDoc(doc(db,"customers",String(selected.id)), savedC2).catch(e=>console.error(e));
       showToast("紀錄已更新 ✓");
     }
     setCustomers(updated);setSelected(updated.find(c=>c.id===selected.id));setView("detail");
@@ -1041,8 +1016,6 @@ export default function App(){
     const now=new Date().toISOString();
     const updated=customers.map(c=>c.id===selected.id?{...c,updatedAt:now,visits:c.visits.filter(v=>v.id!==vid)}:c);
     setCustomers(updated);
-    const savedC3=updated.find(c=>c.id===selected.id);
-    setDoc(doc(db,"customers",String(selected.id)), savedC3).catch(e=>console.error(e));
     setSelected(savedC3);setDeleteConfirm(null);showToast("紀錄已刪除","error");
   };
   const toggleService=s=>setVisitForm(f=>({...f,services:f.services.includes(s)?f.services.filter(x=>x!==s):[...f.services,s]}));
