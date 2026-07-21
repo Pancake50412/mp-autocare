@@ -15,17 +15,21 @@ async function sbGet() {
 }
 async function sbUpsert(customer) {
   try {
-    const r = await fetch(SB_URL + "/rest/v1/customers", {
+    const r = await fetch(SB_URL + "/rest/v1/customers?on_conflict=cid", {
       method: "POST",
       headers: { ...SB_HEADERS, "Prefer": "resolution=merge-duplicates,return=minimal" },
       body: JSON.stringify(customer)
     });
+    if (!r.ok) {
+      const err = await r.text();
+      console.error("Supabase error:", r.status, err);
+    }
     return r.ok;
-  } catch(e) { return false; }
+  } catch(e) { console.error("sbUpsert failed:", e); return false; }
 }
 async function sbDelete(id) {
   try {
-    const r = await fetch(SB_URL + "/rest/v1/customers?cid=eq." + id, {
+    const r = await fetch(SB_URL + "/rest/v1/customers?cid=eq." + encodeURIComponent(id), {
       method: "DELETE", headers: SB_HEADERS
     });
     return r.ok;
