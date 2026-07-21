@@ -725,7 +725,7 @@ function getWeekDays(base){
   return Array.from({length:7},(_,i)=>{const x=new Date(d);x.setDate(x.getDate()-dow+i);return x.toISOString().slice(0,10);});
 }
 
-function BookingTab({S,bookings,setBookings,bookingView,setBookingView,bookingCalDate,setBookingCalDate,dailyLimit,setDailyLimit,showBookingForm,setShowBookingForm,showLimitModal,setShowLimitModal,bookingForm,setBookingForm,deleteBookingConfirm,setDeleteBookingConfirm,serviceCategories,bookingSelectedDate,setBookingSelectedDate}){
+function BookingTab({S,bookings,setBookings,sbUpsertBooking,sbDeleteBooking,bookingView,setBookingView,bookingCalDate,setBookingCalDate,dailyLimit,setDailyLimit,showBookingForm,setShowBookingForm,showLimitModal,setShowLimitModal,bookingForm,setBookingForm,deleteBookingConfirm,setDeleteBookingConfirm,serviceCategories,bookingSelectedDate,setBookingSelectedDate}){
   const [menuOpen,setMenuOpen]=useState(false);
   const today=new Date().toISOString().slice(0,10);
   const year=bookingCalDate.getFullYear(),month=bookingCalDate.getMonth();
@@ -1242,6 +1242,7 @@ export default function App(){
         {/* BOOKING TAB */}
         {tab==="booking"&&view==="list"&&(
           <BookingTab S={S} bookings={bookings} setBookings={setBookings}
+            sbUpsertBooking={sbUpsertBooking} sbDeleteBooking={sbDeleteBooking}
             bookingView={bookingView} setBookingView={setBookingView}
             bookingSelectedDate={bookingSelectedDate} setBookingSelectedDate={setBookingSelectedDate}
             bookingCalDate={bookingCalDate} setBookingCalDate={setBookingCalDate}
