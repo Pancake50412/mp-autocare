@@ -7,11 +7,19 @@ const SB_HEADERS = { "Content-Type": "application/json", "apikey": SB_KEY, "Auth
 
 async function sbGet() {
   try {
-    const r = await fetch(SB_URL + "/rest/v1/customers?select=*", { headers: SB_HEADERS });
+    const r = await fetch(SB_URL + "/rest/v1/customers?select=*&order=created_at.asc", { headers: SB_HEADERS });
     if (!r.ok) return null;
-    const data = await r.json();
-    return data;
-  } catch(e) { return null; }
+    const rows = await r.json();
+    // Filter out test rows and parse data field
+    const customers = rows
+      .filter(row => row.data && row.data !== "hello" && row.data !== "world")
+      .map(row => {
+        try { return JSON.parse(row.data); }
+        catch(e) { return null; }
+      })
+      .filter(Boolean);
+    return customers;
+  } catch(e) { console.error("sbGet error:", e); return null; }
 }
 async function sbUpsert(customer) {
   try {
@@ -975,9 +983,8 @@ export default function App(){
   useEffect(()=>{
     sbGet().then(data=>{
       if (data && data.length > 0) {
-        const parsed = data.map(row => typeof row.data === "string" ? JSON.parse(row.data) : row.data);
-        setCustomers(parsed);
-        try { localStorage.setItem("mp_customers", JSON.stringify(parsed)); } catch(e){}
+        setCustomers(data);
+        try { localStorage.setItem("mp_customers", JSON.stringify(data)); } catch(e){}
       }
     });
   },[]);
