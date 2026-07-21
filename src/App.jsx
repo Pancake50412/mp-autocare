@@ -1,34 +1,35 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 
-// Firebase setup via compat SDK
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyChVuGSdNrPyA3jx2Jfia5vsnVRGnrvuto",
-  authDomain: "mp-autocare.firebaseapp.com",
-  projectId: "mp-autocare",
-  storageBucket: "mp-autocare.firebasestorage.app",
-  messagingSenderId: "74541839921",
-  appId: "1:74541839921:web:ad8bdeb87113b820ad0710"
-};
+// Supabase config
+const SB_URL = "https://plgspjfvalfgfnoizhpm.supabase.co";
+const SB_KEY = "sb_publishable_meAYm8sD2awBWNpj7g2XNQ_G9xev3WW";
+const SB_HEADERS = { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY };
 
-function loadFirebase() {
-  return new Promise((resolve) => {
-    if (window._db) { resolve(window._db); return; }
-    const s1 = document.createElement('script');
-    s1.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
-    s1.onload = () => {
-      const s2 = document.createElement('script');
-      s2.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js';
-      s2.onload = () => {
-        if (!window.firebase.apps.length) {
-          window.firebase.initializeApp(FIREBASE_CONFIG);
-        }
-        window._db = window.firebase.firestore();
-        resolve(window._db);
-      };
-      document.head.appendChild(s2);
-    };
-    document.head.appendChild(s1);
-  });
+async function sbGet() {
+  try {
+    const r = await fetch(SB_URL + "/rest/v1/customers?select=*", { headers: SB_HEADERS });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return data;
+  } catch(e) { return null; }
+}
+async function sbUpsert(customer) {
+  try {
+    const r = await fetch(SB_URL + "/rest/v1/customers", {
+      method: "POST",
+      headers: { ...SB_HEADERS, "Prefer": "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(customer)
+    });
+    return r.ok;
+  } catch(e) { return false; }
+}
+async function sbDelete(id) {
+  try {
+    const r = await fetch(SB_URL + "/rest/v1/customers?cid=eq." + id, {
+      method: "DELETE", headers: SB_HEADERS
+    });
+    return r.ok;
+  } catch(e) { return false; }
 }
 
 function makeS(dark) {
@@ -965,45 +966,28 @@ export default function App(){
       return saved ? JSON.parse(saved) : initialCustomers;
     } catch(e) { return initialCustomers; }
   });
-  const dbRef = useRef(null);
-  const [cloudReady, setCloudReady] = useState(false);
 
-  // Load Firebase and sync
+  // Load from Supabase on mount
   useEffect(()=>{
-    loadFirebase().then(db=>{
-      dbRef.current = db;
-      // Listen for real-time updates
-      db.collection("customers").onSnapshot(snap=>{
-        if (!snap.empty) {
-          const data = snap.docs.map(d=>({...d.data(), id:d.id}));
-          setCustomers(data);
-          try { localStorage.setItem("mp_customers", JSON.stringify(data)); } catch(e){}
-        }
-        setCloudReady(true);
-      }, err=>{
-        console.warn("Firestore offline, using localStorage:", err);
-        setCloudReady(false);
-      });
-    }).catch(err=>{
-      console.warn("Firebase load failed:", err);
+    sbGet().then(data=>{
+      if (data && data.length > 0) {
+        const parsed = data.map(row => typeof row.data === "string" ? JSON.parse(row.data) : row.data);
+        setCustomers(parsed);
+        try { localStorage.setItem("mp_customers", JSON.stringify(parsed)); } catch(e){}
+      }
     });
   },[]);
 
-  // Save to localStorage as backup whenever customers change
+  // Save to localStorage backup
   useEffect(()=>{
-    try { localStorage.setItem("mp_customers", JSON.stringify(customers)); }
-    catch(e) {}
+    try { localStorage.setItem("mp_customers", JSON.stringify(customers)); } catch(e){}
   },[customers]);
 
-  function saveToCloud(updatedList) {
-    if (!dbRef.current) return;
-    updatedList.forEach(c=>{
-      dbRef.current.collection("customers").doc(String(c.id)).set(c).catch(e=>console.error(e));
-    });
+  function saveToCloud(c) {
+    sbUpsert({ cid: String(c.id), data: JSON.stringify(c) });
   }
   function deleteFromCloud(id) {
-    if (!dbRef.current) return;
-    dbRef.current.collection("customers").doc(String(id)).delete().catch(e=>console.error(e));
+    sbDelete(String(id));
   }
   const [view,setView]=useState("list");
   const [tab,setTab]=useState("home");
@@ -1071,11 +1055,11 @@ export default function App(){
     if(view==="addVisit"){
       const nv={...visitForm,id:String(Date.now()),amount:Number(visitForm.amount)||0};
       updated=customers.map(c=>c.id===selected.id?{...c,updatedAt:now,visits:[nv,...c.visits].sort((a,b)=>b.date.localeCompare(a.date))}:c);
-      saveToCloud([updated.find(c=>c.id===selected.id)]);
+      saveToCloud(updated.find(c=>c.id===selected.id));
       showToast("消費紀錄已新增 ✓");
     } else {
       updated=customers.map(c=>c.id===selected.id?{...c,updatedAt:now,visits:c.visits.map(v=>v.id===editingVisit.id?{...v,...visitForm,amount:Number(visitForm.amount)||0}:v)}:c);
-      saveToCloud([updated.find(c=>c.id===selected.id)]);
+      saveToCloud(updated.find(c=>c.id===selected.id));
       showToast("紀錄已更新 ✓");
     }
     setCustomers(updated);setSelected(updated.find(c=>c.id===selected.id));setView("detail");
