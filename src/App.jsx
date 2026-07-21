@@ -44,6 +44,36 @@ async function sbDelete(id) {
   } catch(e) { return false; }
 }
 
+// Bookings Supabase functions
+async function sbGetBookings() {
+  try {
+    const r = await fetch(SB_URL + "/rest/v1/bookings?select=*&order=created_at.asc", { headers: SB_HEADERS });
+    if (!r.ok) return null;
+    const rows = await r.json();
+    return rows.filter(row => row.data).map(row => {
+      try { return JSON.parse(row.data); } catch(e) { return null; }
+    }).filter(Boolean);
+  } catch(e) { return null; }
+}
+async function sbUpsertBooking(booking) {
+  try {
+    const r = await fetch(SB_URL + "/rest/v1/bookings?on_conflict=bid", {
+      method: "POST",
+      headers: { ...SB_HEADERS, "Prefer": "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ bid: String(booking.id), data: JSON.stringify(booking) })
+    });
+    return r.ok;
+  } catch(e) { return false; }
+}
+async function sbDeleteBooking(id) {
+  try {
+    const r = await fetch(SB_URL + "/rest/v1/bookings?bid=eq." + encodeURIComponent(id), {
+      method: "DELETE", headers: SB_HEADERS
+    });
+    return r.ok;
+  } catch(e) { return false; }
+}
+
 function makeS(dark) {
   const bg=dark?"#0f1117":"#f0f4f8",card=dark?"rgba(255,255,255,0.04)":"#fff";
   const b=dark?"rgba(255,255,255,0.07)":"#e2e8f0",b2=dark?"rgba(255,255,255,0.1)":"#cbd5e0";
@@ -975,7 +1005,7 @@ export default function App(){
   const [customers,setCustomers]=useState([]);
   const [loading,setLoading]=useState(true);
 
-  // Load from Supabase on mount + poll every 15 seconds
+  // Load customers from Supabase + poll every 15 seconds
   useEffect(()=>{
     const load = (isFirst) => {
       sbGet().then(data=>{
@@ -988,6 +1018,18 @@ export default function App(){
     };
     load(true);
     const interval = setInterval(()=>load(false), 15000);
+    return () => clearInterval(interval);
+  },[]);
+
+  // Load bookings from Supabase + poll every 15 seconds
+  useEffect(()=>{
+    const loadB = () => {
+      sbGetBookings().then(data=>{
+        if (data !== null) setBookings(data);
+      });
+    };
+    loadB();
+    const interval = setInterval(loadB, 15000);
     return () => clearInterval(interval);
   },[]);
 
@@ -1013,11 +1055,7 @@ export default function App(){
   const [toast,setToast]=useState(null);
   const [deleteConfirm,setDeleteConfirm]=useState(null);
   const [statsRange,setStatsRange]=useState("week");
-  const [bookings,setBookings]=useState([
-    {id:1,date:"2026-04-05",time:"09:00",name:"陳大明",phone:"0912-345-678",licensePlate:"ABC-1234",services:["大美容"],note:""},
-    {id:2,date:"2026-04-05",time:"14:00",name:"林小美",phone:"0923-456-789",licensePlate:"XYZ-5678",services:["全車鍍膜"],note:"新車"},
-    {id:3,date:"2026-04-07",time:"10:30",name:"王建國",phone:"0934-567-890",licensePlate:"DEF-9012",services:["精緻深層"],note:""},
-  ]);
+  const [bookings,setBookings]=useState([]);
   const [bookingView,setBookingView]=useState("list");
   const [bookingSelectedDate,setBookingSelectedDate]=useState(new Date().toISOString().slice(0,10));
   const [bookingCalDate,setBookingCalDate]=useState(new Date());
