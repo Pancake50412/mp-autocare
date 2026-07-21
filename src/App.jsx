@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+
 function makeS(dark) {
   const bg=dark?"#0f1117":"#f0f4f8",card=dark?"rgba(255,255,255,0.04)":"#fff";
   const b=dark?"rgba(255,255,255,0.07)":"#e2e8f0",b2=dark?"rgba(255,255,255,0.1)":"#cbd5e0";
@@ -637,7 +638,6 @@ function StaffLoginTab({S,darkMode,setDarkMode}){
 // ── Booking helpers ───────────────────────────────────────────
 const WEEKDAYS_FULL=["週日","週一","週二","週三","週四","週五","週六"];
 const HOURS=Array.from({length:16},(_,i)=>i+7);
-const SVC_CAT_COLOR={"全車鍍膜":"#3498db","客製鍍膜":"#3498db","大美容":"#9b59b6","小美容":"#9b59b6","車室深層":"#9b59b6","一般洗車":"#2ecc71","精緻深層":"#2ecc71"};
 function getServiceCatColor(services){
   if(services.some(s=>["全車鍍膜","客製鍍膜"].includes(s))) return "#3498db";
   if(services.some(s=>["大美容","小美容","車室深層"].includes(s))) return "#9b59b6";
@@ -922,16 +922,24 @@ function BField({S,label,children}){
 function Field({S,label,children}){
   return <div style={S.formField}><label style={S.formLabel}>{label}</label>{children}</div>;
 }
-function StatCard({S,icon,label,value,color}){
-  return <div style={{...S.statCard,borderTop:`3px solid ${color}`}}><div style={S.statIcon}>{icon}</div><div style={{...S.statValue,color}}>{value}</div><div style={S.statLabel}>{label}</div></div>;
-}
 
 
 // ── Main App ──────────────────────────────────────────────────
 export default function App(){
   const [darkMode,setDarkMode]=useState(true);
   const S=useMemo(()=>makeS(darkMode),[darkMode]);
-  const [customers,setCustomers]=useState(initialCustomers);
+  const [customers,setCustomers]=useState(()=>{
+    try {
+      const saved = localStorage.getItem("mp_customers");
+      return saved ? JSON.parse(saved) : initialCustomers;
+    } catch(e) { return initialCustomers; }
+  });
+
+  // Save to localStorage whenever customers change
+  useEffect(()=>{
+    try { localStorage.setItem("mp_customers", JSON.stringify(customers)); }
+    catch(e) { console.error("Save error:", e); }
+  },[customers]);
   const [view,setView]=useState("list");
   const [tab,setTab]=useState("home");
   const [homeView,setHomeView]=useState("main");
@@ -969,7 +977,6 @@ export default function App(){
 
   const goList=()=>{setView("list");setSelected(null);};
   const goDetail=c=>{setSelected(c);setView("detail");};
-  const openAddCustomer=()=>{setCustomerForm(emptyCustomerForm);setView("addCustomer");};
   const openEditCustomer=c=>{setCustomerForm({name:c.name,phone:c.phone,carBrand:c.carBrand||"",carModel:c.carModel||"",licensePlate:c.licensePlate||"",note:c.note||"",vehicles:c.vehicles?[...c.vehicles.map(v=>({...v}))]:[]}); setView("editCustomer");};
   const saveCustomer=()=>{
     if(!customerForm.name.trim()||!customerForm.phone.trim()){showToast("姓名與電話為必填","error");return;}
@@ -980,10 +987,15 @@ export default function App(){
       showToast("客戶已新增 ✓");setView("list");
     } else {
       const updated=customers.map(c=>c.id===selected.id?{...c,...customerForm,vehicles:customerForm.vehicles||c.vehicles||[],updatedAt:now}:c);
-      setCustomers(updated);setSelected(updated.find(c=>c.id===selected.id));showToast("資料已更新 ✓");setView("detail");
+      setCustomers(updated);
+      const updatedC=updated.find(c=>c.id===selected.id);
+      setSelected(updatedC);showToast("資料已更新 ✓");setView("detail");
     }
   };
-  const deleteCustomer=id=>{setCustomers(customers.filter(c=>c.id!==id));setDeleteConfirm(null);goList();showToast("客戶已刪除","error");};
+  const deleteCustomer=id=>{
+    setCustomers(customers.filter(c=>c.id!==id));
+    setDeleteConfirm(null);goList();showToast("客戶已刪除","error");
+  };
   const openAddVisit=()=>{setVisitForm(makeEmptyVisitForm());setView("addVisit");};
   const openEditVisit=v=>{setVisitForm({date:v.date,time:v.time||"",services:[...v.services],paymentMethod:v.paymentMethod,amount:String(v.amount),note:v.note,visitLicensePlate:v.visitLicensePlate||"",staff:v.staff||""});setEditingVisit(v);setView("editVisit");};
   const saveVisit=()=>{
@@ -991,7 +1003,7 @@ export default function App(){
     const now=new Date().toISOString();
     let updated;
     if(view==="addVisit"){
-      const nv={...visitForm,id:Date.now(),amount:Number(visitForm.amount)||0};
+      const nv={...visitForm,id:String(Date.now()),amount:Number(visitForm.amount)||0};
       updated=customers.map(c=>c.id===selected.id?{...c,updatedAt:now,visits:[nv,...c.visits].sort((a,b)=>b.date.localeCompare(a.date))}:c);
       showToast("消費紀錄已新增 ✓");
     } else {
@@ -1003,7 +1015,8 @@ export default function App(){
   const deleteVisit=vid=>{
     const now=new Date().toISOString();
     const updated=customers.map(c=>c.id===selected.id?{...c,updatedAt:now,visits:c.visits.filter(v=>v.id!==vid)}:c);
-    setCustomers(updated);setSelected(updated.find(c=>c.id===selected.id));setDeleteConfirm(null);showToast("紀錄已刪除","error");
+    setCustomers(updated);
+    setSelected(savedC3);setDeleteConfirm(null);showToast("紀錄已刪除","error");
   };
   const toggleService=s=>setVisitForm(f=>({...f,services:f.services.includes(s)?f.services.filter(x=>x!==s):[...f.services,s]}));
   const handleBack=()=>{
