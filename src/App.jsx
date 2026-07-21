@@ -1043,12 +1043,15 @@ export default function App(){
     const now=new Date().toISOString();
     if(view==="addCustomer"){
       const fullModel=[customerForm.carBrand,customerForm.carModel].filter(Boolean).join(" ");
-      setCustomers([{...customerForm,carModel:fullModel,id:Date.now(),updatedAt:now,visits:[],vehicles:customerForm.vehicles||[]}, ...customers]);
+      const newC={...customerForm,carModel:fullModel,id:String(Date.now()),updatedAt:now,visits:[],vehicles:customerForm.vehicles||[]};
+      setCustomers([newC,...customers]);
+      saveToCloud(newC);
       showToast("客戶已新增 ✓");setView("list");
     } else {
       const updated=customers.map(c=>c.id===selected.id?{...c,...customerForm,vehicles:customerForm.vehicles||c.vehicles||[],updatedAt:now}:c);
       setCustomers(updated);
       const updatedC=updated.find(c=>c.id===selected.id);
+      saveToCloud(updatedC);
       setSelected(updatedC);showToast("資料已更新 ✓");setView("detail");
     }
   };
@@ -1158,7 +1161,9 @@ export default function App(){
                 const now=new Date().toISOString();
                 const fm=[customerForm.carBrand,customerForm.carModel].filter(Boolean).join(" ");
                 const veh=customerForm.carBrand&&customerForm.licensePlate?[{brand:customerForm.carBrand,model:customerForm.carModel,licensePlate:customerForm.licensePlate}]:[];
-                setCustomers([{...customerForm,carModel:fm,id:Date.now(),updatedAt:now,visits:[],vehicles:veh},...customers]);
+                const nc={...customerForm,carModel:fm,id:String(Date.now()),updatedAt:now,visits:[],vehicles:veh};
+                setCustomers([nc,...customers]);
+                saveToCloud(nc);
                 setCustomerForm(emptyCustomerForm);showToast("客戶已新增 ✓");setTab("home");
               }}>新增客戶</button>
             </div>
