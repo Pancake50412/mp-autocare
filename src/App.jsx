@@ -735,11 +735,18 @@ function BookingTab({S,bookings,setBookings,sbUpsertBooking,sbDeleteBooking,book
   const saveBooking=()=>{
     if(!bookingForm.name.trim()){alert("請填寫姓名");return;}
     if(!bookingForm.id&&isFull(bookingForm.date)){alert("當日預約已滿");return;}
-    if(bookingForm.id) setBookings(bookings.map(b=>b.id===bookingForm.id?{...bookingForm}:b));
-    else setBookings([...bookings,{...bookingForm,id:Date.now()}]);
+    if(bookingForm.id){
+      const updated={...bookingForm};
+      setBookings(bookings.map(b=>b.id===bookingForm.id?updated:b));
+      sbUpsertBooking(updated);
+    } else {
+      const nb={...bookingForm,id:String(Date.now())};
+      setBookings([...bookings,nb]);
+      sbUpsertBooking(nb);
+    }
     setShowBookingForm(false);
   };
-  const delBooking=id=>{setBookings(bookings.filter(b=>b.id!==id));setDeleteBookingConfirm(null);};
+  const delBooking=id=>{setBookings(bookings.filter(b=>b.id!==id));sbDeleteBooking(String(id));setDeleteBookingConfirm(null);};
   const togBSvc=s=>setBookingForm(f=>({...f,services:f.services.includes(s)?f.services.filter(x=>x!==s):[...f.services,s]}));
 
   const BS={
