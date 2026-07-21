@@ -1028,12 +1028,10 @@ export default function App(){
     return () => clearInterval(interval);
   },[]);
 
-  // Load bookings when user switches to booking tab
+  // Load bookings on mount only
   useEffect(()=>{
-    if(tab==="booking"){
-      sbGetBookings().then(data=>{ if(data!==null) setBookings(data); });
-    }
-  },[tab]);
+    sbGetBookings().then(data=>{ if(data!==null) setBookings(data); });
+  },[]);
 
   // Save to localStorage backup
   useEffect(()=>{
