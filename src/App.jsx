@@ -979,14 +979,19 @@ export default function App(){
     } catch(e) { return initialCustomers; }
   });
 
-  // Load from Supabase on mount
+  // Load from Supabase on mount + poll every 15 seconds
   useEffect(()=>{
-    sbGet().then(data=>{
-      if (data && data.length > 0) {
-        setCustomers(data);
-        try { localStorage.setItem("mp_customers", JSON.stringify(data)); } catch(e){}
-      }
-    });
+    const load = () => {
+      sbGet().then(data=>{
+        if (data && data.length > 0) {
+          setCustomers(data);
+          try { localStorage.setItem("mp_customers", JSON.stringify(data)); } catch(e){}
+        }
+      });
+    };
+    load();
+    const interval = setInterval(load, 15000);
+    return () => clearInterval(interval);
   },[]);
 
   // Save to localStorage backup
