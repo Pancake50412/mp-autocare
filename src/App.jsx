@@ -1122,7 +1122,9 @@ export default function App(){
     const now=new Date().toISOString();
     const updated=customers.map(c=>c.id===selected.id?{...c,updatedAt:now,visits:c.visits.filter(v=>v.id!==vid)}:c);
     setCustomers(updated);
-    setSelected(savedC3);setDeleteConfirm(null);showToast("紀錄已刪除","error");
+    const updatedC=updated.find(c=>c.id===selected.id);
+    saveToCloud(updatedC);
+    setSelected(updatedC);setDeleteConfirm(null);showToast("紀錄已刪除","error");
   };
   const toggleService=s=>setVisitForm(f=>({...f,services:f.services.includes(s)?f.services.filter(x=>x!==s):[...f.services,s]}));
   const handleBack=()=>{
