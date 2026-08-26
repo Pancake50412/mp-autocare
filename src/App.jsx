@@ -316,7 +316,7 @@ function TWDatePicker({S,value,onChange,style}){
   const [vy,setVy]=useState(()=>value?parseInt(value.slice(0,4)):new Date().getFullYear());
   const [vm,setVm]=useState(()=>value?parseInt(value.slice(5,7))-1:new Date().getMonth());
   const TWwd=["一","二","三","四","五","六","日"];
-  const today=new Date().toISOString().slice(0,10);
+  const _d=new Date(); const today=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
   const dim=new Date(vy,vm+1,0).getDate();
   const fd=new Date(vy,vm,1).getDay(); const offset=fd===0?6:fd-1;
   const fmt=value?`${value.slice(0,4)}/${value.slice(5,7)}/${value.slice(8,10)}`:"選擇日期";
@@ -727,7 +727,7 @@ function getWeekDays(base){
 
 function BookingTab({S,bookings,setBookings,sbUpsertBooking,sbDeleteBooking,bookingView,setBookingView,bookingCalDate,setBookingCalDate,dailyLimit,setDailyLimit,showBookingForm,setShowBookingForm,showLimitModal,setShowLimitModal,bookingForm,setBookingForm,deleteBookingConfirm,setDeleteBookingConfirm,serviceCategories,bookingSelectedDate,setBookingSelectedDate}){
   const [menuOpen,setMenuOpen]=useState(false);
-  const today=new Date().toISOString().slice(0,10);
+  const _d=new Date(); const today=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
   const year=bookingCalDate.getFullYear(),month=bookingCalDate.getMonth();
   const onDate=d=>bookings.filter(b=>b.date===d).sort((a,b)=>a.time.localeCompare(b.time));
   const isFull=d=>onDate(d).length>=dailyLimit;
