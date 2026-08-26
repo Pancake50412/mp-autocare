@@ -1160,6 +1160,13 @@ export default function App(){
           </div>
           <div style={S.headerR}>
             {view==="detail"&&currentSelected&&(<>
+              <button style={{...S.outlineBtn,background:"rgba(52,152,219,0.15)",border:"1px solid rgba(52,152,219,0.35)",color:"#3498db"}} onClick={()=>{
+                const v=currentSelected.vehicles&&currentSelected.vehicles.length>0?currentSelected.vehicles[0]:null;
+                setBookingForm({date:new Date().toISOString().slice(0,10),time:"09:00",name:currentSelected.name,phone:currentSelected.phone,licensePlate:v?v.licensePlate:currentSelected.licensePlate||"",services:[],note:""});
+                setShowBookingForm(true);
+                setTab("booking");
+                setView("list");
+              }}>📅 預約</button>
               <button style={S.outlineBtn} onClick={()=>openEditCustomer(currentSelected)}>✏️ 編輯</button>
               <button style={S.addBtn} onClick={openAddVisit}>+ 新增消費</button>
             </>)}
