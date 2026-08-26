@@ -1190,16 +1190,16 @@ export default function App(){
             <Field S={S} label="姓名 *"><input style={S.input} value={customerForm.name} onChange={e=>setCustomerForm({...customerForm,name:e.target.value})} placeholder="客戶姓名"/></Field>
             <Field S={S} label="電話 *"><input style={S.input} value={customerForm.phone} onChange={e=>setCustomerForm({...customerForm,phone:e.target.value})} placeholder="0912-345-678"/></Field>
             <Field S={S} label="廠牌">
-              <select style={S.selectInput} value={customerForm.carBrand} onChange={e=>setCustomerForm({...customerForm,carBrand:e.target.value,carModel:""})}>
-                <option value="">請選擇廠牌</option>
-                {Object.keys(CAR_BRANDS).map(b=><option key={b} value={b}>{b}</option>)}
-              </select>
+              <CustomSelect S={S} value={customerForm.carBrand}
+                onChange={v=>setCustomerForm({...customerForm,carBrand:v,carModel:""})}
+                options={[{value:"",label:"請選擇廠牌"},...Object.keys(CAR_BRANDS).map(b=>({value:b,label:b}))]}
+                placeholder="請選擇廠牌"/>
             </Field>
             {customerForm.carBrand&&<Field S={S} label="型號">
-              <select style={S.selectInput} value={customerForm.carModel} onChange={e=>setCustomerForm({...customerForm,carModel:e.target.value})}>
-                <option value="">請選擇型號</option>
-                {CAR_BRANDS[customerForm.carBrand].map(m=><option key={m} value={m}>{m}</option>)}
-              </select>
+              <CustomSelect S={S} value={customerForm.carModel}
+                onChange={v=>setCustomerForm({...customerForm,carModel:v})}
+                options={[{value:"",label:"請選擇型號"},...(CAR_BRANDS[customerForm.carBrand]||[]).map(m=>({value:m,label:m}))]}
+                placeholder="請選擇型號"/>
             </Field>}
             <Field S={S} label="車牌"><input style={S.input} value={customerForm.licensePlate} onChange={e=>setCustomerForm({...customerForm,licensePlate:e.target.value})} placeholder="ABC-1234"/></Field>
             <Field S={S} label="備註"><textarea style={{...S.input,height:72,resize:"vertical"}} value={customerForm.note} onChange={e=>setCustomerForm({...customerForm,note:e.target.value})} placeholder="特殊需求..."/></Field>
@@ -1324,16 +1324,16 @@ export default function App(){
             <Field S={S} label="姓名 *"><input style={S.input} value={customerForm.name} onChange={e=>setCustomerForm({...customerForm,name:e.target.value})} placeholder="客戶姓名"/></Field>
             <Field S={S} label="電話 *"><input style={S.input} value={customerForm.phone} onChange={e=>setCustomerForm({...customerForm,phone:e.target.value})} placeholder="0912-345-678"/></Field>
             <Field S={S} label="廠牌">
-              <select style={S.selectInput} value={customerForm.carBrand||""} onChange={e=>setCustomerForm({...customerForm,carBrand:e.target.value,carModel:""})}>
-                <option value="">請選擇廠牌</option>
-                {Object.keys(CAR_BRANDS).map(b=><option key={b} value={b}>{b}</option>)}
-              </select>
+              <CustomSelect S={S} value={customerForm.carBrand||""}
+                onChange={v=>setCustomerForm({...customerForm,carBrand:v,carModel:""})}
+                options={[{value:"",label:"請選擇廠牌"},...Object.keys(CAR_BRANDS).map(b=>({value:b,label:b}))]}
+                placeholder="請選擇廠牌"/>
             </Field>
             {customerForm.carBrand&&<Field S={S} label="型號">
-              <select style={S.selectInput} value={customerForm.carModel||""} onChange={e=>setCustomerForm({...customerForm,carModel:e.target.value})}>
-                <option value="">請選擇型號</option>
-                {(CAR_BRANDS[customerForm.carBrand]||[]).map(m=><option key={m} value={m}>{m}</option>)}
-              </select>
+              <CustomSelect S={S} value={customerForm.carModel||""}
+                onChange={v=>setCustomerForm({...customerForm,carModel:v})}
+                options={[{value:"",label:"請選擇型號"},...(CAR_BRANDS[customerForm.carBrand]||[]).map(m=>({value:m,label:m}))]}
+                placeholder="請選擇型號"/>
             </Field>}
             <Field S={S} label="車牌"><input style={S.input} value={customerForm.licensePlate||""} onChange={e=>setCustomerForm({...customerForm,licensePlate:e.target.value})} placeholder="ABC-1234"/></Field>
             <Field S={S} label="備註"><textarea style={{...S.input,height:72,resize:"vertical"}} value={customerForm.note||""} onChange={e=>setCustomerForm({...customerForm,note:e.target.value})} placeholder="特殊需求..."/></Field>
@@ -1351,12 +1351,14 @@ export default function App(){
                         onClick={()=>setCustomerForm(f=>({...f,vehicles:f.vehicles.filter((_,i)=>i!==idx)}))}>移除</button>
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-                      <select style={{...S.selectInput,fontSize:13}} value={v.brand} onChange={e=>setCustomerForm(f=>({...f,vehicles:f.vehicles.map((vv,i)=>i===idx?{...vv,brand:e.target.value,model:""}:vv)}))}>
-                        <option value="">選廠牌</option>{Object.keys(CAR_BRANDS).map(b=><option key={b} value={b}>{b}</option>)}
-                      </select>
-                      <select style={{...S.selectInput,fontSize:13}} value={v.model} onChange={e=>setCustomerForm(f=>({...f,vehicles:f.vehicles.map((vv,i)=>i===idx?{...vv,model:e.target.value}:vv)}))}>
-                        <option value="">選型號</option>{v.brand&&(CAR_BRANDS[v.brand]||[]).map(m=><option key={m} value={m}>{m}</option>)}
-                      </select>
+                      <CustomSelect S={S} value={v.brand}
+                        onChange={val=>setCustomerForm(f=>({...f,vehicles:f.vehicles.map((vv,i)=>i===idx?{...vv,brand:val,model:""}:vv)}))}
+                        options={[{value:"",label:"選廠牌"},...Object.keys(CAR_BRANDS).map(b=>({value:b,label:b}))]}
+                        placeholder="選廠牌"/>
+                      <CustomSelect S={S} value={v.model}
+                        onChange={val=>setCustomerForm(f=>({...f,vehicles:f.vehicles.map((vv,i)=>i===idx?{...vv,model:val}:vv)}))}
+                        options={[{value:"",label:"選型號"},...(v.brand&&CAR_BRANDS[v.brand]?CAR_BRANDS[v.brand].map(m=>({value:m,label:m})):[] )]}
+                        placeholder="選型號"/>
                     </div>
                     <input style={{...S.input,fontSize:13}} value={v.licensePlate} placeholder="車牌 ABC-1234" onChange={e=>setCustomerForm(f=>({...f,vehicles:f.vehicles.map((vv,i)=>i===idx?{...vv,licensePlate:e.target.value}:vv)}))}/>
                   </div>
