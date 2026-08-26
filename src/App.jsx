@@ -924,7 +924,6 @@ function BookingTab({S,bookings,setBookings,sbUpsertBooking,sbDeleteBooking,book
   }
 
   // List view
-  const today=new Date().toISOString().slice(0,10);
   const allSorted=[...bookings].filter(b=>b.date>=today).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
   const grouped={};
   allSorted.forEach(bk=>{if(!grouped[bk.date])grouped[bk.date]=[];grouped[bk.date].push(bk);});
