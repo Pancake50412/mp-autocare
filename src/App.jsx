@@ -725,7 +725,7 @@ function getWeekDays(base){
   return Array.from({length:7},(_,i)=>{const x=new Date(d);x.setDate(x.getDate()-dow+i);return x.toISOString().slice(0,10);});
 }
 
-function BookingTab({S,bookings,setBookings,sbUpsertBooking,sbDeleteBooking,bookingView,setBookingView,bookingCalDate,setBookingCalDate,dailyLimit,setDailyLimit,showBookingForm,setShowBookingForm,showLimitModal,setShowLimitModal,bookingForm,setBookingForm,deleteBookingConfirm,setDeleteBookingConfirm,serviceCategories,bookingSelectedDate,setBookingSelectedDate}){
+function BookingTab({S,bookings,setBookings,sbUpsertBooking,sbDeleteBooking,onAddAsCustomer,bookingView,setBookingView,bookingCalDate,setBookingCalDate,dailyLimit,setDailyLimit,showBookingForm,setShowBookingForm,showLimitModal,setShowLimitModal,bookingForm,setBookingForm,deleteBookingConfirm,setDeleteBookingConfirm,serviceCategories,bookingSelectedDate,setBookingSelectedDate}){
   const [menuOpen,setMenuOpen]=useState(false);
   const _d=new Date(); const today=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
   const year=bookingCalDate.getFullYear(),month=bookingCalDate.getMonth();
@@ -963,6 +963,7 @@ function BookingTab({S,bookings,setBookings,sbUpsertBooking,sbDeleteBooking,book
                 {bk.note&&<div style={BS.apptNote}>📝 {bk.note}</div>}
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:6,flexShrink:0}}>
+                <button style={{...BS.editBtn,background:"rgba(46,204,113,0.12)",border:"1px solid rgba(46,204,113,0.3)",color:"#2ecc71"}} onClick={()=>onAddAsCustomer(bk)} title="新增為客戶">＋</button>
                 <button style={BS.editBtn} onClick={()=>{setBookingForm({...bk});setShowBookingForm(true);}}>✏️</button>
                 <button style={BS.delBtn} onClick={()=>setDeleteBookingConfirm(bk)}>🗑️</button>
               </div>
@@ -1292,6 +1293,10 @@ export default function App(){
         {tab==="booking"&&view==="list"&&(
           <BookingTab S={S} bookings={bookings} setBookings={setBookings}
             sbUpsertBooking={sbUpsertBooking} sbDeleteBooking={sbDeleteBooking}
+            onAddAsCustomer={(bk)=>{
+              setCustomerForm({name:bk.name||"",phone:bk.phone||"",carBrand:"",carModel:"",licensePlate:bk.licensePlate||"",note:"",vehicles:bk.licensePlate?[{brand:"",model:"",licensePlate:bk.licensePlate}]:[]});
+              setTab("add");setView("list");
+            }}
             bookingView={bookingView} setBookingView={setBookingView}
             bookingSelectedDate={bookingSelectedDate} setBookingSelectedDate={setBookingSelectedDate}
             bookingCalDate={bookingCalDate} setBookingCalDate={setBookingCalDate}
