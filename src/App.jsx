@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 
 // Supabase config
@@ -210,9 +211,10 @@ const CAR_BRANDS = {
   "Subaru 速霸陸":["BRZ","Crosstrek","Exiga","Forester","Impreza","Justy","Legacy","Levorg","Outback","Solterra","Trezia","WRX","XV"],
   "Suzuki 鈴木":["Across","Alto","Baleno","Grand Vitara","Ignis","Jimny","Kizashi","S-Cross","Swift","Swift Sport","SX4","Vitara"],
   "Tesla 特斯拉":["Cybertruck","Model 3","Model 3 Highland","Model S","Model X","Model Y","Model Y Juniper"],
-  "Toyota 豐田":["Alphard","Auris","Avensis","Aygo","bZ3","bZ4X","Camry","Corolla","Corolla Altis","Corolla Cross","Crown","GR86","GR Supra","GR Yaris","Hilux","Hiace","Innova","Land Cruiser","Prado","Prius","Prius+","RAV4","Rush","Sienna","Town Ace","Vellfire","Vios","Wish","Yaris","Yaris Cross"],
-  "Volkswagen 福斯":["Arteon","Beetle","Caddy","Caravelle","CC","EOS","Golf","Golf GTI","Golf R","Golf Variant","ID.3","ID.4","ID.5","ID.7","Jetta","Multivan","Phaeton","Polo","Scirocco","Sharan","T-Cross","T-Roc","Tiguan","Tiguan Allspace","Touareg","Touran"],
-  "Volvo 富豪":["C30","C40","C70","EC40","EX30","EX40","EX90","S40","S60","S80","S90","V40","V60","V70","V90","V90 Cross Country","XC40","XC60","XC70","XC90"],
+  "Toyota 豐田":["86","Alphard","Auris","Avensis","Aygo","bZ3","bZ4X","Camry","Chr","Corolla","Corolla Altis","Corolla Cross","Crown","GR86","GR Supra","GR Yaris","Granvia","Hiace","Hilux","Innova","Land Cruiser","Prada","Prado","Prius","Prius α","Prius+","RAV4","Rush","Sienna","Supra","Town Ace","Vellfire","Vios","Wish","Yaris","Yaris Cross"],
+  "SAAB 薩博":["9-3","9-3 Cabrio","9-3 SportCombi","9-5","9-5 SportCombi","9-7X"],
+  "Volkswagen 福斯":["Arteon","Beetle","Caddy","Caravelle","CC","EOS","Golf","Golf GTI","Golf Plus","Golf R","Golf Variant","ID.3","ID.4","ID.5","ID.6","ID.7","Jetta","Multivan","Phaeton","Polo","Scirocco","Sharan","T-Cross","T-Roc","Tiguan","Tiguan Allspace","Touareg","Touran","Vento"],
+  "Volvo 富豪":["C30","C40","C70","EC40","EX30","EX40","EX90","S40","S60","S80","S90","V40","V50","V60","V70","V90","V90 Cross Country","XC40","XC60","XC70","XC90"],
   "其他":["其他車型"],
 };
 
